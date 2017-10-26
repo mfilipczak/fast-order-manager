@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: fast-order-manager
+  output:
+    ansi:
+      enabled: always
+  datasource:
+    platform: h2
+    url: "jdbc:h2:mem:fastordermanager;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false"
+    username: sa
+    password:
+  jpa:
+    generate-ddl: true
+    hibernate:
+      use-new-id-generator-mappings: true
+  data:
+    rest:
+      enable-enum-translation: true
+      
+  h2:
+    console:
+      enabled: true
+      path: "/h2-console"
+
+server:
+  port: 8080
+  
+logging:
+  level:
+    root: 'INFO'
+    org.hibernate.SQL: DEBUG

@@ -1,0 +1,86 @@
+buildscript {
+    ext {
+        springVersion = '5.0.0.BUILD-SNAPSHOT'
+		springBootVersion = '2.0.0.BUILD-SNAPSHOT'
+    }
+    repositories {
+        mavenCentral()
+        maven { url 'http://repo.springsource.org/libs-release'}
+		maven { url 'http://repo.springsource.org/plugins-release' }
+		maven { url 'http://repo.springsource.org/plugins-snapshot' }
+	
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath('se.transmode.gradle:gradle-docker:1.2')
+    }
+}
+
+group = 'com.cgi'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: "io.spring.dependency-management"
+apply plugin: 'docker'
+
+
+jar {
+    baseName = 'fast-order-manager'
+    version =  '0.1.0'
+}
+
+task buildDocker(type: Docker, dependsOn: build) {
+  applicationName = jar.baseName
+  dockerfile = file('Dockerfile')
+  doFirst {
+    copy {
+      from jar
+      into "${stageDir}/target"
+    }
+  }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+}
+
+dependencyManagement {
+    imports {
+        ext['hibernate.version'] = '5.2.12.Final'
+    }
+}
+
+
+ext['spring-restdocs.version'] = '1.2.0.BUILD-SNAPSHOT'
+
+dependencies {
+    compile('org.springframework.boot:spring-boot-starter')
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile("org.springframework.boot:spring-boot-starter-data-rest")
+    runtime('org.springframework.data:spring-data-rest-hal-browser')
+    runtime("com.h2database:h2")
+    runtime('org.springframework.boot:spring-boot-starter-logging')
+
+    testCompile 'org.springframework.restdocs:spring-restdocs-restassured'
+    testCompile 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+    testCompile 'junit:junit:4.12'
+    '1.2.6.RELEASE'.with { springStatemachineVersion ->
+        compile("org.springframework.statemachine:spring-statemachine-core:$springStatemachineVersion")
+        compile("org.springframework.statemachine:spring-statemachine-kryo:$springStatemachineVersion")
+        testCompile("org.springframework.statemachine:spring-statemachine-test:$springStatemachineVersion")
+    }
+    '1.16.18'.with { lombokVersion ->
+        compileOnly("org.projectlombok:lombok:$lombokVersion")
+        testCompileOnly("org.projectlombok:lombok:$lombokVersion")
+    }
+}
+
