@@ -8,5 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findByCurrentState(OrderState currentState, Pageable pageable);
+    Order findByExternalId(String externalId);
 
 }

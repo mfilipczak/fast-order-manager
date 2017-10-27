@@ -142,7 +142,7 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
 
     
     public Action<OrderState, OrderEvent> decompose() {
-        return context -> actorManager.decompose((Long)context.getExtendedState().getVariables().get("ID"));
+        return context -> actorManager.decompose((String)context.getExtendedState().getVariables().get("ID"));
     }
     
     public Action<OrderState, OrderEvent> receivePayment() {

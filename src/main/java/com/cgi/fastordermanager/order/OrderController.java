@@ -35,7 +35,6 @@ public class OrderController {
 			headers = "Accept=application/json,application/xml")
 	@Transactional
 	public @ResponseBody HttpEntity<Void> setCurrentDataList(@RequestBody Order order) {
-		orderRepository.save(order);
 		actorManager.startOrder(order);
 		return ResponseEntity.accepted().build();
 	}
