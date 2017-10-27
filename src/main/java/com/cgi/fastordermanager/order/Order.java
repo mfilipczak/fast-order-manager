@@ -62,6 +62,7 @@ public class Order extends AbstractPersistable<Long> implements ContextEntity<Or
     public void setStateMachineContext(@NonNull StateMachineContext<OrderState, OrderEvent> stateMachineContext) {
     	this.currentState = stateMachineContext.getState();
         this.stateMachineContext = stateMachineContext;
+        System.err.println(stateMachineContext);
     }
 
     @JsonIgnore

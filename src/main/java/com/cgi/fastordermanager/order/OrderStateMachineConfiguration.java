@@ -2,6 +2,7 @@ package com.cgi.fastordermanager.order;
 
 import java.util.EnumSet;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.statemachine.ExtendedState;
@@ -16,13 +17,21 @@ import org.springframework.statemachine.listener.StateMachineListener;
 import org.springframework.statemachine.listener.StateMachineListenerAdapter;
 import org.springframework.statemachine.state.State;
 
+import com.cgi.fastordermanager.akka.ActorManager;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j
 @EnableStateMachineFactory(contextEvents=false)
+@RequiredArgsConstructor
 public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAdapter<OrderState, OrderEvent> {
 
+	
+	@Autowired
+	private final ActorManager actorManager;
+	
     @Override
     public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent> config) throws Exception {
 
@@ -113,7 +122,7 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
                 .source(OrderState.REGISTERED)
                 .target(OrderState.DECOMPOSING)
                 .event(OrderEvent.DECOMPOSE)
-                .action(receivePayment())
+                .action(decompose())
             .and()
             // (2)
             .withExternal()
@@ -131,6 +140,11 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
             ;
     }
 
+    
+    public Action<OrderState, OrderEvent> decompose() {
+        return context -> actorManager.decompose((Long)context.getExtendedState().getVariables().get("ID"));
+    }
+    
     public Action<OrderState, OrderEvent> receivePayment() {
         return context -> setPaid(context.getExtendedState());
     }

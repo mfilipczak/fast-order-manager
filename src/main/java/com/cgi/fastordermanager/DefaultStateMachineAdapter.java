@@ -1,5 +1,8 @@
 package com.cgi.fastordermanager;
 
+import java.io.Serializable;
+
+import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.persist.StateMachinePersister;
@@ -21,13 +24,13 @@ public class DefaultStateMachineAdapter<S, E, T> {
     }
 
     @SneakyThrows
-    public void persist(StateMachine<S, E> stateMachine, T order) {
+    public <N> void persist(StateMachine<S, E> stateMachine, T order) {
         persister.persist(stateMachine, order);
     }
 
     public StateMachine<S, E> create() {
         StateMachine<S, E> stateMachine = stateMachineFactory.getStateMachine();
-        stateMachine.start();
+       // stateMachine.start();
         return stateMachine;
     }
 
