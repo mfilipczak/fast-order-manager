@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
 import com.cgi.fastordermanager.akka.actor.OrderManagerActor;
+import com.cgi.fastordermanager.akka.actor.ProcessRfsActor;
 import com.cgi.fastordermanager.order.Order;
 import com.cgi.fastordermanager.order.OrderEvent;
 
@@ -37,6 +38,15 @@ public class ActorManager {
 		runner.tell(orderId, ActorRef.noSender());
 	}
 
+	public void process(String orderId) {
+		ActorRef runner = actors.get("processOrder");
+		if (runner == null) {
+			runner = actorSystem.actorOf(SpringExtProvider.get(actorSystem).props("processOrderActor"),
+					"processOrder");
+			actors.put("processOrder", runner);
+		}
+		runner.tell(orderId, ActorRef.noSender());
+	}
 	public void changeOrderStatus(Order order, OrderEvent event) {
 		ActorRef runner = actors.get("ordermanager");
 		if (runner == null) {
@@ -53,6 +63,15 @@ public class ActorManager {
 			actors.put("runOrder", runner);
 		}
 		runner.tell(order, ActorRef.noSender());
+	}
+	
+	public void processRfs(Long orderId, String rfsId) {
+		ActorRef runner = actors.get("processRfs");
+		if (runner == null) {
+			runner = actorSystem.actorOf(SpringExtProvider.get(actorSystem).props("processRfsActor"), "processRfs");
+			actors.put("processRfs", runner);
+		}
+		runner.tell(new ProcessRfsActor.ProcessRfsMessage(orderId, rfsId), ActorRef.noSender());
 	}
 
 }

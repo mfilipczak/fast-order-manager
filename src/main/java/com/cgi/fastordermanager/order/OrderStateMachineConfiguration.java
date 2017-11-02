@@ -129,6 +129,7 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
                 .source(OrderState.DECOMPOSING)
                 .target(OrderState.PROCESSING)
                 .event(OrderEvent.PROCESS)
+                .action(process())
             .and()
             // (3)
             .withExternal()
@@ -143,6 +144,10 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
     
     public Action<OrderState, OrderEvent> decompose() {
         return context -> actorManager.decompose((String)context.getExtendedState().getVariables().get("ID"));
+    }
+    
+    public Action<OrderState, OrderEvent> process() {
+        return context -> actorManager.process((String)context.getExtendedState().getVariables().get("ID"));
     }
     
     public Action<OrderState, OrderEvent> receivePayment() {
