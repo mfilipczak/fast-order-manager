@@ -1,16 +1,15 @@
 package com.cgi.fastordermanager.order;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.springframework.data.jpa.domain.AbstractPersistable;
@@ -36,7 +35,8 @@ public class Rfs extends AbstractPersistable<Long> implements Serializable { // 
  
     @Getter
     @Setter
-    String currentState;
+    @Enumerated(EnumType.STRING)
+    ProductState currentState;
     
     @Getter
     @Setter

@@ -46,6 +46,7 @@ public class OrderManagerActor extends AbstractActor {
 			RestTemplate restTemplate = new RestTemplate();
 			HttpEntity<Void> request = new HttpEntity<>(null);
 			String fooResourceUrl  = String.format("http://localhost:8080/orders/%s/receive/%s", order.order.getId(), order.event.name());
+			log.info(fooResourceUrl);
 			restTemplate.postForEntity(fooResourceUrl, request, HttpEntity.class);
 		}).matchAny(o -> log.info("received unknown message")).build();
 	}

@@ -40,7 +40,8 @@ public class Cfs extends AbstractPersistable<Long> implements Serializable { // 
  
     @Getter
     @Setter
-    String currentState;
+    @Enumerated(EnumType.STRING)
+    ProductState currentState = ProductState.PENDING;
     
     @Getter
     @Setter

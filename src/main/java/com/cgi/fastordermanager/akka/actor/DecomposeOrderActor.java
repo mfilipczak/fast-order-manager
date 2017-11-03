@@ -20,10 +20,12 @@ import org.springframework.web.client.RestTemplate;
 import com.cgi.fastordermanager.ContextEntity;
 import com.cgi.fastordermanager.DefaultStateMachineAdapter;
 import com.cgi.fastordermanager.akka.ActorManager;
+import com.cgi.fastordermanager.order.CfsRepository;
 import com.cgi.fastordermanager.order.Order;
 import com.cgi.fastordermanager.order.OrderEvent;
 import com.cgi.fastordermanager.order.OrderRepository;
 import com.cgi.fastordermanager.order.OrderState;
+import com.cgi.fastordermanager.order.ProductState;
 import com.cgi.fastordermanager.order.Rfs;
 import com.cgi.tpc.model.CfsDef;
 import com.cgi.tpc.model.RfsDef;
@@ -44,6 +46,9 @@ public class DecomposeOrderActor extends AbstractActor {
 
 	@Autowired
 	private final OrderRepository orderRepository;
+	
+	@Autowired
+	private final CfsRepository cfsRepository;
 
 	@Autowired
 	final DefaultStateMachineAdapter<OrderState, OrderEvent, ContextEntity<OrderState, OrderEvent, ? extends Serializable>> orderStateMachineAdapter;
@@ -71,13 +76,15 @@ public class DecomposeOrderActor extends AbstractActor {
 					Rfs rfs = new Rfs();
 					rfs.setRfsId(r.getRfsId());
 					rfs.setName(r.getName());
+					rfs.setCurrentState(ProductState.PENDING);
 					rfs.setBlockedRfs(r.getBlockedRfs().stream().map(b->b.getRfsId()).collect(Collectors.joining("#")));
 					list.add(rfs);
 				});
 
 			});
-			orderRepository.saveAndFlush(order);
+			cfsRepository.save(order.getCfs());
 			actorManager.changeOrderStatus(order, OrderEvent.PROCESS);
+			log.info("Order {} ", order.getCurrentState());
 		}).matchAny(o -> log.info("received unknown message")).build();
 	}
 }

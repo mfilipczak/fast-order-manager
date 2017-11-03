@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.cgi.fastordermanager.akka.actor.OrderManagerActor;
 import com.cgi.fastordermanager.akka.actor.ProcessRfsActor;
+import com.cgi.fastordermanager.akka.actor.ProcessRfsRplyActor;
 import com.cgi.fastordermanager.order.Order;
 import com.cgi.fastordermanager.order.OrderEvent;
 
@@ -29,6 +30,7 @@ public class ActorManager {
 	private Map<String, ActorRef> actors = new HashMap<>();
 
 	public void decompose(String orderId) {
+		log.info("Dekompozycja: {}", orderId);
 		ActorRef runner = actors.get("decomposeOrder");
 		if (runner == null) {
 			runner = actorSystem.actorOf(SpringExtProvider.get(actorSystem).props("decomposeOrderActor"),
@@ -47,6 +49,7 @@ public class ActorManager {
 		}
 		runner.tell(orderId, ActorRef.noSender());
 	}
+	
 	public void changeOrderStatus(Order order, OrderEvent event) {
 		ActorRef runner = actors.get("ordermanager");
 		if (runner == null) {
@@ -72,6 +75,15 @@ public class ActorManager {
 			actors.put("processRfs", runner);
 		}
 		runner.tell(new ProcessRfsActor.ProcessRfsMessage(orderId, rfsId), ActorRef.noSender());
+	}
+	
+	public void processRfsRply(Long orderId, Long rfsId) {
+		ActorRef runner = actors.get("processRfsRply");
+		if (runner == null) {
+			runner = actorSystem.actorOf(SpringExtProvider.get(actorSystem).props("processRfsRplyActor"), "processRfsRply");
+			actors.put("processRfsRply", runner);
+		}
+		runner.tell(new ProcessRfsRplyActor.ProcessRfsRplyMessage(orderId, rfsId), ActorRef.noSender());
 	}
 
 }

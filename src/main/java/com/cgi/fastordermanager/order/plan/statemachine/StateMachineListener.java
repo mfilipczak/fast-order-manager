@@ -16,31 +16,28 @@ public class StateMachineListener extends StateMachineListenerAdapter<String,Str
 
     @Override
     public void stateChanged(State<String,String> from, State<String,String> to) {
-        log.info(String.format("Transitioned from %s to %s%n", from == null ? "none" : from.getId(), to.getId()));
+        log.debug(String.format("Transitioned from %s to %s", from == null ? "none" : from.getId(), to.getId()));
     }
     
     @Override
     public void stateEntered(State<String, String> state) {
-    	System.err.println("ENTER:" + state.getId() +":"+System.currentTimeMillis());
-  //  	stateMachineManager.sendEvent(state.getId(), state.getId().concat("_EVENT"));
-        log.info(String.format("Entered to %s%n", state.getId()));
+        log.debug(String.format("Entered to %s", state.getId()));
         
     }
     
     @Override
     public void stateExited(State<String, String> state) {
-    	//System.out.println("EXIT:" + state.getId() +":"+System.currentTimeMillis());
-        log.info(String.format("Exited from %s%n", state.getId()));
+        log.debug(String.format("Exited from %s", state.getId()));
     }
     
 	@Override
 	public void stateMachineStarted(StateMachine<String, String> stateMachine) {
-		 log.info(String.format("Started " + stateMachine.getId()));
+		 log.debug(String.format("Started " + stateMachine.getId()));
 	}
 
 	@Override
 	public void stateMachineStopped(StateMachine<String, String> stateMachine) {
-		log.info(String.format("Stopped " + stateMachine.getId()));
+		log.debug(String.format("Stopped " + stateMachine.getId()));
 	}
 	
 }

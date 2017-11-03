@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j
-@EnableStateMachineFactory(contextEvents=false)
+@EnableStateMachineFactory
 @RequiredArgsConstructor
 public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAdapter<OrderState, OrderEvent> {
 
@@ -46,7 +46,7 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
             throws Exception {
         states
             .withStates()
-                .initial(OrderState.REGISTERED, context -> setUnpaid(context.getExtendedState()))
+                .initial(OrderState.REGISTERED)
                 .end(OrderState.COMPLETED)
                 .states(EnumSet.allOf(OrderState.class));
     }
@@ -64,55 +64,6 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
         };
     }
 
-
-/**
-+----------------------------------------------------------------------------------------------------------------------------+
-|                                                     pre-payment flow                                                       |
-+----------------------------------------------------------------------------------------------------------------------------+
-|                                (1)                            (2) [if paid]                 (3)                            |
-|     +------------------+ ReceivePayment  +-- ---------------+  Deliver +------------------+  Refund  +------------------+  |
-| *-->|       Open       |---------------->| ReadyForDelivery |--------->|    Completed     |--------->|     Canceled     |  |
-|     |                  |                 |                  |          |                  |          |                  |  |
-|     |                  |                 |  ReceivePayment  |          |                  |          |  ReceivePayment  |  |
-|     |                  |                 |  +------------+  |          |                  |          |  +------------+  |  |
-|     |                  |                 |  |    (11)    |  |          |                  |          |  |    (12)    |  |  |
-|     |                  |                 |  |            v  |          |                  |          |  |            v  |  |
-|     +------------------+                 +------------------+          +------------------+          +------------------+  |
-|        | ^                                             | |         [if paid] (4) Refund                ^   ^       | ^     |
-|        | |                                             | +---------------------------------------------+   |       | |     |
-|        | |                                             |                                                   |       | |     |
-|        | |                                             |           [if !paid]  (8) Cancel                  |       | |     |
-|        | |           (5) Reopen                        +---------------------------------------------------+       | |     |
-|        | +---------------------------------------------------------------------------------------------------------+ |     |
-|        |                                              (6) Cancel                                                     |     |
-|        +-------------------------------------------------------------------------------------------------------------+     |
-|                                                                                                                            |
-+----------------------------------------------------------------------------------------------------------------------------+
-
-
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|                                                                     post-payment flow                                                                       |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|                                (7)                            (9) [if !paid]                 (10)                            (3)                            |
-|     +------------------+ UnlockDelivery  +-- ---------------+  Deliver +------------------+ ReceivePayment +---------------+  Refund  +------------------+  |
-| *-->|       Open       |---------------->| ReadyForDelivery |--------->| AwaitingPayment  |--------------->|   Completed   |--------->|     Canceled     |  |
-|     |                  |                 |                  |          |                  |                |               |          |                  |  |
-|     |                  |                 |  ReceivePayment  |          |                  |                |               |          |  ReceivePayment  |  |
-|     |                  |                 |  +------------+  |          |                  |                |               |          |  +------------+  |  |
-|     |                  |                 |  |    (11)    |  |          |                  |                |               |          |  |    (12)    |  |  |
-|     |                  |                 |  |            v  |          |                  |                |               |          |  |            v  |  |
-|     +------------------+                 +------------------+          +------------------+                +---------------+          +------------------+  |
-|        | ^                                             |  |          [if paid] (4) Refund                                               ^    ^      | ^     |
-|        | |                                             |  +-----------------------------------------------------------------------------+    |      | |     |
-|        | |                                             |                                                                                     |      | |     |
-|        | |                                             |             [if !paid] (8) Cancel                                                   |      | |     |
-|        | |           (5) Reopen                        +-------------------------------------------------------------------------------------+      | |     |
-|        | +------------------------------------------------------------------------------------------------------------------------------------------+ |     |
-|        |                                              (6) Cancel                                                                                      |     |
-|        +----------------------------------------------------------------------------------------------------------------------------------------------+     |
-|                                                                                                                                                             |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
-*/
     @Override
     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions)
             throws Exception {
@@ -136,8 +87,6 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
                 .source(OrderState.PROCESSING)
                 .target(OrderState.COMPLETED)
                 .event(OrderEvent.COMPLETE)
-                .action(refundPayment())
-        
             ;
     }
 
@@ -149,32 +98,4 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
     public Action<OrderState, OrderEvent> process() {
         return context -> actorManager.process((String)context.getExtendedState().getVariables().get("ID"));
     }
-    
-    public Action<OrderState, OrderEvent> receivePayment() {
-        return context -> setPaid(context.getExtendedState());
-    }
-
-    public Action<OrderState, OrderEvent> refundPayment() {
-        return context -> setUnpaid(context.getExtendedState());
-    }
-
-    private Guard<OrderState, OrderEvent> isPaid() {
-        return context -> 
-            (boolean) context.getExtendedState().get("paid", Boolean.class);
-    }
-
-    private Guard<OrderState, OrderEvent> not(Guard<OrderState, OrderEvent> guard) {
-        return context -> !guard.evaluate(context);
-    }
-
-    void setUnpaid(ExtendedState extendedState) {
-        log.info("Unsetting paid");
-        extendedState.getVariables().put("paid", Boolean.FALSE);
-    }
-
-    void setPaid(ExtendedState extendedState) {
-        log.info("Setting paid");
-        extendedState.getVariables().put("paid", Boolean.TRUE);
-    }
-
 }

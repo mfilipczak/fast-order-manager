@@ -1,6 +1,7 @@
 package com.cgi.fastordermanager.akka.actor;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -19,8 +20,6 @@ import com.cgi.fastordermanager.order.OrderRepository;
 import com.cgi.fastordermanager.order.OrderState;
 
 import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
-import akka.actor.Props;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,6 +48,7 @@ public class RunOrderActor extends AbstractActor {
 			machine.getExtendedState().getVariables().put("ID", order.getExternalId());
 			machine.start();
 			orderStateMachineAdapter.persist(machine, order);
+			order.setCreateTime(new Date());
 			orderRepository.saveAndFlush(order);
 			actorManager.changeOrderStatus(order, OrderEvent.DECOMPOSE);
 		}).matchAny(o -> log.info("received unknown message")).build();
