@@ -9,10 +9,24 @@ spring:
     url: "jdbc:h2:mem:fastordermanager;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false"
     username: sa
     password:
+#    platform: mysql
+#    url: "jdbc:mysql://db:3306/fom"
+#    username: root
+#    password: example
+#    platform: oracle
+#    url: "jdbc:oracle:thin:@//db-oracle:1521/XE"
+#    username: system
+#    password: manager
+ 
   jpa:
     generate-ddl: true
     hibernate:
       use-new-id-generator-mappings: true
+   # database-platform: org.hibernate.dialect.Oracle10gDialect
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL5Dialect
+    
   data:
     rest:
       enable-enum-translation: true
@@ -21,6 +35,8 @@ spring:
     console:
       enabled: true
       path: "/h2-console"
+      settings:
+        web-allow-others: true
 
 server:
   port: 8080
