@@ -58,7 +58,7 @@ public class DecomposeOrderActor extends AbstractActor {
 		return receiveBuilder().match(String.class, orderId -> {
 			Order order = orderRepository.findByExternalId(orderId);
 			log.info("Received order to start: {}", order);
-			String url = "http://tpc:8181/rfs";
+			String url = "http://localhost:8181/rfs";
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			RestTemplate restTemplate = new RestTemplate();

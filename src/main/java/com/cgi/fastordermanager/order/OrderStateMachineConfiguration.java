@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.statemachine.ExtendedState;
+import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.action.Action;
+import org.springframework.statemachine.annotation.OnStateMachineError;
+import org.springframework.statemachine.annotation.WithStateMachine;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -97,5 +100,14 @@ public class OrderStateMachineConfiguration extends EnumStateMachineConfigurerAd
     
     public Action<OrderState, OrderEvent> process() {
         return context -> actorManager.process((String)context.getExtendedState().getVariables().get("ID"));
+    }
+    
+    @WithStateMachine
+    public class ErrorBean {
+
+        @OnStateMachineError
+        public void onStateMachineError(StateMachine<OrderState, OrderEvent> stateMachine, Exception exception){
+        	System.err.println("extended state " + exception.getMessage() );
+        }
     }
 }
