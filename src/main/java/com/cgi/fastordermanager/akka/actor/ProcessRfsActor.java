@@ -50,12 +50,12 @@ public class ProcessRfsActor extends AbstractActor {
 
 	@Autowired
 	private ApplicationContext applicationContext;
-	
+
 	@Autowired
 	private JmsMessagingTemplate jmsMessagingTemplate;
 
 	@Autowired
-    private Queue queue;
+	private Queue queue;
 
 	@AllArgsConstructor
 	public static class ProcessRfsMessage {
@@ -66,13 +66,19 @@ public class ProcessRfsActor extends AbstractActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(ProcessRfsMessage.class, rfsMessage -> {
-			Order order = orderRepository.findOne(rfsMessage.orderId);
-			Optional<Rfs> rfs = order.getCfs().stream().flatMap(cfs -> cfs.getRfs().stream()).filter(r -> r.getRfsId().equals(rfsMessage.rfsId)).findFirst();
-				if(rfs.isPresent()) {
-				jmsMessagingTemplate.convertAndSend(queue, new RfsMessage(rfs.get().getId(), order.getId(), rfs.get().getName(), rfs.get().getRfsId()));
+			try {
+				log.info("Received rfs to process: orderid= {}; rfsId={}", rfsMessage.orderId, rfsMessage.rfsId);
+				Order order = orderRepository.findOne(rfsMessage.orderId);
+				Optional<Rfs> rfs = order.getCfs().stream().flatMap(cfs -> cfs.getRfs().stream())
+						.filter(r -> r.getRfsId().equals(rfsMessage.rfsId)).findFirst();
+				if (rfs.isPresent()) {
+					jmsMessagingTemplate.convertAndSend(queue, new RfsMessage(rfs.get().getId(), order.getId(),
+							rfs.get().getName(), rfs.get().getRfsId()));
+				}
+			} catch (Exception e) {
+				log.info("Rfs Process exception: {}",e);
 			}
-			
-		
+
 		}).matchAny(o -> log.info("received unknown message")).build();
 	}
 

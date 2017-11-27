@@ -48,7 +48,7 @@ public class ProcessOrderActor extends AbstractActor {
 	public Receive createReceive() {
 		return receiveBuilder().match(String.class, orderId -> {
 			Order order = orderRepository.findByExternalId(orderId);
-			log.info("Received order to start: {}", order);
+			log.info("Received order to process: {}", order);
 
 			List<Rfs> rfsList = order.getCfs().stream().flatMap(cfs -> cfs.getRfs().stream())
 					.collect(Collectors.toList());

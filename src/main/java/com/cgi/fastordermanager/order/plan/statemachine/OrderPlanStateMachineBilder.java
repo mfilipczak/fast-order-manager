@@ -20,8 +20,6 @@ import org.springframework.statemachine.config.configurers.StateConfigurer;
 import com.cgi.fastordermanager.akka.ActorManager;
 import com.cgi.fastordermanager.graph.RfsGraphEdge;
 import com.cgi.fastordermanager.order.Order;
-import com.cgi.fastordermanager.order.OrderEvent;
-import com.cgi.fastordermanager.order.OrderState;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +30,16 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @Slf4j
 public class OrderPlanStateMachineBilder {
+
+	private static final String END_VERTEX = "-1";
+
+	private static final String START_VERTEX = "0";
+
+	private static final String _END = "_END";
+
+	private static final String JOIN = "JOIN_";
+
+	private static final String FORK = "FORK_";
 
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -53,28 +61,28 @@ public class OrderPlanStateMachineBilder {
 		// builder.configureConfiguration().withConfiguration().beanFactory(new
 		// StaticListableBeanFactory()).listener(new StateMachineListener());
 		BreadthFirstIterator<String, RfsGraphEdge> graphIterator = new BreadthFirstIterator<>(directedGraph);
-		StateConfigurer<String, String> rootStc = builder.configureStates().withStates().initial("0").end("-1");
+		StateConfigurer<String, String> rootStc = builder.configureStates().withStates().initial(START_VERTEX).end(END_VERTEX);
 
 		Queue<QueueElement> forkJoinQueue = new LinkedList<>();
 		Map<String, StateConfigurer<String, String>> regionsMap = new HashMap<>();
 		graphIterator.forEachRemaining(vertex -> {
-			final StateConfigurer<String, String> stc = (regionsMap.containsKey(vertex) && !"-1".equals(vertex))
+			final StateConfigurer<String, String> stc = (regionsMap.containsKey(vertex) && !END_VERTEX.equals(vertex))
 					? regionsMap.get(vertex)
 					: rootStc;
 			if (directedGraph.outDegreeOf(vertex) > 1) {
 				QueueElement qe = new QueueElement();
 				qe.setVertex(vertex);
 				qe.setChildCount(directedGraph.outDegreeOf(vertex));
-				stc.fork("FORK_".concat(vertex));
+				stc.fork(FORK.concat(vertex));
 				forkJoinQueue.add(qe);
 
 				try {
 					ForkTransitionConfigurer<String, String> ftc = builder.configureTransitions().withExternal()
-							.source(vertex).target("FORK_".concat(vertex)).and().withFork().source("FORK_".concat(vertex));
+							.source(vertex).target(FORK.concat(vertex)).and().withFork().source(FORK.concat(vertex));
 					directedGraph.edgesOf(vertex).stream().filter(e -> vertex.equals(e.getSource())).forEach(e -> {
 						ftc.target(e.getTarget());
 						try {
-							StateConfigurer<String, String> stc2 = stc.and().withStates().parent("FORK_".concat(vertex))
+							StateConfigurer<String, String> stc2 = stc.and().withStates().parent(FORK.concat(vertex))
 									.initial(e.getTarget());
 							regionsMap.put(e.getTarget(), stc2);
 						} catch (Exception e1) {
@@ -88,12 +96,12 @@ public class OrderPlanStateMachineBilder {
 			}
 
 			if (directedGraph.inDegreeOf(vertex) > 1) {
-				stc.join("JOIN_".concat(vertex));
+				stc.join(JOIN.concat(vertex));
 				try {
 					JoinTransitionConfigurer<String, String> jtc = builder.configureTransitions().withExternal()
-							.source("JOIN_".concat(vertex)).target(vertex).and().withJoin().target("JOIN_".concat(vertex));
+							.source(JOIN.concat(vertex)).target(vertex).and().withJoin().target(JOIN.concat(vertex));
 					directedGraph.edgesOf(vertex).stream().filter(e -> vertex.equals(e.getTarget())).forEach(e -> {
-						jtc.source(e.getSource().concat("_END"));
+						jtc.source(e.getSource().concat(_END));
 					});
 
 				} catch (Exception e) {
@@ -106,17 +114,17 @@ public class OrderPlanStateMachineBilder {
 						.filter(e -> (vertex.equals(e.getSource()) && directedGraph.inDegreeOf(e.getTarget()) == 1))
 						.forEach(e -> {
 							try {
-								builder.configureTransitions().withExternal().source(vertex.concat("_END")).target(e.getTarget());
+								builder.configureTransitions().withExternal().source(vertex.concat(_END)).target(e.getTarget());
 							} catch (Exception ex) {
 								log.error(ex.getMessage());
 							}
 						});
 			}
-			if (!(vertex.equals("0") || vertex.equals("-1"))) {
+			if (!(vertex.equals(START_VERTEX) || vertex.equals(END_VERTEX))) {
 				stc.state(vertex, processRfs(vertex));
-				stc.state(vertex.concat("_END"));
+				stc.state(vertex.concat(_END));
 				try {
-					builder.configureTransitions().withExternal().source(vertex).target(vertex.concat("_END")).event(vertex.concat("_EVENT"));
+					builder.configureTransitions().withExternal().source(vertex).target(vertex.concat(_END)).event(vertex.concat("_EVENT"));
 				} catch (Exception ex) {
 					log.error(ex.getMessage());
 				}
@@ -130,6 +138,7 @@ public class OrderPlanStateMachineBilder {
 
 		StateMachine<String, String> machine = builder.build();
 		machine.getExtendedState().getVariables().put("ORDER_ID", order.getId());
+
 		return machine;
 	}
 

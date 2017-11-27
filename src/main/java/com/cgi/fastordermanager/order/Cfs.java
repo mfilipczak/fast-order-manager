@@ -16,6 +16,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -51,6 +53,11 @@ public class Cfs extends AbstractPersistable<Long> implements Serializable { // 
     @Getter
     @Setter
     @NonNull
+    String action;
+    
+    @Getter
+    @Setter
+    @NonNull
     String cfsId;
 
     @Getter
@@ -61,9 +68,18 @@ public class Cfs extends AbstractPersistable<Long> implements Serializable { // 
 
     @Getter
     @Setter
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name="cfs_id",nullable=false)
+    @LazyCollection(LazyCollectionOption.FALSE)
     List<Rfs> rfs;
+    
+    @Getter
+    @Setter
+    @OneToMany(cascade = CascadeType.ALL)
+    @LazyCollection(LazyCollectionOption.FALSE)
+    List<Attribute> attributes;
+    
+    
     
     @JsonIgnore
     @Override
